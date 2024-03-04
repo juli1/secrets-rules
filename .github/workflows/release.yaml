@@ -12,7 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: json-yaml-validate
+        uses: GrantBirki/json-yaml-validate@v2.6.1
+        with:
+          comment: "true"
+          base_dir: "./rules"
+          json_schema: "schema.json"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
