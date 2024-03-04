@@ -18,6 +18,6 @@ content = {
 }
 
 # write file
-with open('rules.yaml', 'w') as f:
+with open('rules.yml', 'w') as f:
     yaml.dump(content, f)
     print('rules.yaml has been created')

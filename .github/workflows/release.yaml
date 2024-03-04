@@ -1,0 +1,28 @@
+name: Release rules
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  upload-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip' # caching pip dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Create rules file
+        run: python misc/release.py
+      - name: Upload versions
+        uses: softprops/action-gh-release@v1
+        with:
+          files: rules.yml
