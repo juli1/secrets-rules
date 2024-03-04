@@ -13,12 +13,13 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: json-yaml-validate
-        uses: GrantBirki/json-yaml-validate@v2.6.1
+      - uses: actions/setup-node@v4
         with:
-          comment: "true"
-          base_dir: "./rules"
-          json_schema: "schema.json"
+          node-version: 20
+      - name: Install pajv
+        run: npm install -g pajv
+      - name: Test schemas
+        run: for v in `ls rules/*.yml`; do echo "Testing $v" && pajv test -s schema.json -d $v --valid ; done
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
