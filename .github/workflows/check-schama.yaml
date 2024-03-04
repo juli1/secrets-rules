@@ -11,5 +11,5 @@ jobs:
         uses: GrantBirki/json-yaml-validate@v2.6.1
         with:
           comment: "true"
-          base_dir: "rules"
+          base_dir: "./rules"
           json_schema: "schema.json"
