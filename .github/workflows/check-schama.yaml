@@ -6,11 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: InoUno/yaml-ls-check@develop
+      - uses: actions/checkout@v4
+      - name: json-yaml-validate
+        uses: GrantBirki/json-yaml-validate@v2.6.1
         with:
-          root: data
-          schemaMapping: |
-          {
-            "schema.json": [ "rules/*.yml" ]
-          }
+          comment: "true"
+          base_dir: "rules"
+          json_schema: "schema.json"
