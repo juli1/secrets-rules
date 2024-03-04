@@ -1,2 +1,73 @@
-name: foo
-description: bar
+id: "aws-tokens"
+description: "Detects secrets used for Amazon Web Services"
+
+matcher:
+  steps:
+    - matcher: glob
+      data: $FILE.PATH
+      pattern: "**/*.txt"
+
+    - matcher: hyperscan
+      data: $FILE.CONTENTS
+      pattern: /api_?key\h=\h.*/i
+
+    - matcher: hyperscan
+      data: $FILE_CONTENTS
+      pattern: /(?<key>(?<key_rand>[a-fA-F]{16})-(?<user_id>[a-zA-Z]{4}))/
+
+    - matcher: entropy
+      data: $CAPTURES.key_rand
+      bits_threshold: 96
+
+    - not:
+        or:
+          - matcher: hyperscan
+            pattern: "aaaa$"
+            data: $CAPTURES.key_rand
+          - matcher: hyperscan
+            pattern: "bbbb$"
+            data: $CAPTURES.key_rand
+
+validator:
+  steps:                                               # This is included as "steps" for future-looking flexibility.
+    # Currently only one "step" is needed/used to perform a single HTTP request
+    - http_request:
+        options:
+          headers:
+            Authorization: "USER: ${{ matcher.key_rand }}_${{ matcher.user_id }}"
+          method: GET
+          url: "https://aws.example.com/user?key=${{ matcher.key }}"
+          rate_limit_rps: 10                           # Maximum number of requests to make per second
+          retry:                                       # Retries occur when receiving 429 or 5xx HTTP error codes
+            max: 5
+            policy:
+              exponential:                             # Standard exponential backoff policy, specified in milliseconds
+                maximum_backoff: 30000
+                jitter: 750
+
+        response_handler:                              # Supports multiple predicates, run in the specified order. If a
+          # predicate matches, the execution halts, returning the given severity
+          - if:
+              equals:
+                - "http.response.status_code": 200
+              then:
+                validity: valid                        # Required validity
+                severity: error                        # Optional severity override. Otherwise, defaults to project config
+          - if:                                        # Some APIs might say that a key used to be valid, but is no longer.
+              # In this example, we have a special case for "invalid"
+              equals:
+                - "http.response.body": "No longer valid"
+                - "http.response.status_code": 403
+              then:
+                validity: invalid
+                severity: notice                       # Optional severity override. Otherwise, defaults to project config
+          - if:
+              equals:
+                - "http.response.status_code": 403
+              then:
+                validity: inconclusive                 # Required validity
+                severity: notice                       # Optional severity override. Otherwise, defaults to project config
+
+          # If no condition matches, the default return will be:
+          # validity: inconclusive
+          # severity: notice

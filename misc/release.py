@@ -1,23 +1,17 @@
-# list files in the rules directory
-
 import os
-import sys
 import yaml
 
-
+# Read all the rules and add them to the list
 files = os.listdir('rules')
-rules = []
+rules = {}
 for file in files:
     with open('rules/' + file, 'r') as f:
         # parse yaml file and get the content
         content = yaml.safe_load(f)
-        rules.append(content)
+        rules[content['id']] = content
 
-content = {
-    "rules": rules
-}
 
 # write file
 with open('rules.yml', 'w') as f:
-    yaml.dump(content, f)
+    yaml.dump(rules, f)
     print('rules.yaml has been created')
